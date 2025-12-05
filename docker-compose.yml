@@ -1,0 +1,98 @@
+version: '3.9'
+
+networks:
+  geodata:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.30.0.0/24
+
+services:
+
+  postgres:
+    container_name: postgres
+    image: postgis/postgis:17-3.4
+    environment:
+      POSTGRES_DB: sinp
+      POSTGRES_USER: ducrocqm
+      POSTGRES_PASSWORD: admin_666
+    networks:
+      geodata:
+        ipv4_address: 172.30.0.10
+    ports:
+      - "5433:5432"
+    restart: unless-stopped
+    volumes:
+      - /mnt/ssd_sandisk/postgres_data:/var/lib/postgresql/data:rw
+
+  geoserver:
+    container_name: geoserver
+    image: geosolutionsit/geoserver:latest
+    depends_on:
+      - postgres
+    environment:
+      JAVA_OPTS: -Xms2G -Xmx4G
+      GEOSERVER_CORS_ENABLED: "true"
+      GEOSERVER_CORS_ALLOWED_HEADERS: '*'
+      GEOSERVER_CORS_ALLOWED_METHODS: GET,POST,PUT,DELETE,HEAD,OPTIONS
+      GEOSERVER_CORS_ALLOWED_ORIGINS: '*'
+      GEOSERVER_CSRF_DISABLED: "true"
+    networks:
+      geodata:
+        ipv4_address: 172.30.0.11
+    ports:
+      - "8080:8080"
+    restart: unless-stopped
+    volumes:
+      - /mnt/ssd_sandisk/geoserver_data:/var/geoserver_data:rw
+      - /mnt/ssd_sandisk/geoserver_webapps:/var/geoserver/webapps:rw
+
+  geonetwork:
+    container_name: geonetwork
+    image: geonetwork:latest
+    depends_on:
+      - postgres
+    environment:
+      GEONETWORK_DB_TYPE: postgres
+      GEONETWORK_DB_HOST: postgres
+      GEONETWORK_DB_PORT: 5432
+      GEONETWORK_DB_NAME: sinp_geonetwork
+      GEONETWORK_DB_USERNAME: ducrocqm
+      GEONETWORK_DB_PASSWORD: admin_666
+    networks:
+      geodata:
+        ipv4_address: 172.30.0.12
+    ports:
+      - "8081:8080"
+    restart: unless-stopped
+    volumes:
+      - /mnt/ssd_sandisk/geonetwork_data:/var/lib/geonetwork:rw
+
+  redis:
+    container_name: redis
+    image: redis:7
+    networks:
+      geodata:
+        ipv4_address: 172.30.0.13
+    ports:
+      - "6379:6379"
+    restart: unless-stopped
+    volumes:
+      - /mnt/ssd_sandisk/redis_data:/data:rw
+    command: ["redis-server", "--appendonly", "yes"]
+
+  mongodb:
+    container_name: mongodb
+    image: mongo:7
+    networks:
+      geodata:
+        ipv4_address: 172.30.0.14
+    ports:
+      - "27017:27017"
+    restart: unless-stopped
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: mongo_admin
+      MONGO_INITDB_ROOT_PASSWORD: admin_666
+    volumes:
+      - /mnt/ssd_sandisk/mongodb_data:/data/db:rw
+
