@@ -88,9 +88,6 @@ services:
     ports:
       - "27017:27017"
     restart: unless-stopped
-    environment:
-      MONGO_INITDB_ROOT_USERNAME: mongo_admin
-      MONGO_INITDB_ROOT_PASSWORD: admin_666
     volumes:
       - /mnt/ssd_sandisk/mongodb_data:/data/db:rw
 
